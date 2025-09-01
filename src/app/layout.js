@@ -6,7 +6,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'La Balota Mágica',
+  title: 'La Balota de la Fortuna',
   description: 'Consulta los resultados del sorteo y mantente al día.',
 };
 
