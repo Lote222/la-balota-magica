@@ -54,7 +54,8 @@ async function getPageData() {
 
   const { data: premios, error: premiosError } = await supabase
     .from("premios")
-    .select("*");
+    .select("*")
+    .order('orden', { ascending: true });
   if (premiosError) {
     console.error("Error obteniendo los premios:", premiosError);
   }
@@ -69,7 +70,7 @@ export default async function HomePage() {
   return (
     // He vuelto a poner el fondo oscuro como acordamos
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <Navbar proximoSorteo={proximoSorteo} />
+      <Navbar proximoSorteo={proximoSorteo} whatsapp={config.whatsapp_number} />
       <HeroSection
         ultimoSorteo={ultimoSorteo}
         premioMayor={config.premio_mayor_actual}
