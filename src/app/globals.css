@@ -24,3 +24,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes shimmering-gold {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmering-gold {
+  background: linear-gradient(90deg, #FFEFBA 0%, #FFD700 20%, #DAA520 40%, #FFD700 60%, #FFEFBA 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmering-gold 8s linear infinite; /* 8s de duración, linear, infinito */
+}

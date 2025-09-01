@@ -1,52 +1,85 @@
 // app/page.js
-import { createClient } from '@/lib/supabase/server';
-import Navbar from '@/components/Navbar'; // Crearemos este componente
-import HeroSection from '@/components/HeroSection'; // Crearemos este componente
+import { createClient } from "@/lib/supabase/server";
+import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import CtaSection from "@/components/CtaSection";
+import ResultadosHistorial from "@/components/ResultadosHistorial";
+import HowToPlaySection from "@/components/HowToPlaySection";
+import PremiosSection from "@/components/PremiosSection";
+import Footer from "@/components/Footer";
 
-// Función para obtener todos los datos de la página de una vez
 async function getPageData() {
   const supabase = createClient();
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
 
-  // Hacemos todas las consultas en paralelo para máxima eficiencia
-  const [sorteosResult, configResult, premiosResult] = await Promise.all([
-    supabase.from('resultados_sorteos').select('*').order('fecha_sorteo', { ascending: false }),
-    supabase.from('site_configurations').select('key, value').eq('website_id', 'd779ec0b-f302-45ba-a165-6f7c95d7d60f'), // REEMPLAZAR CON EL ID DE TU SITIO
-    supabase.from('premios').select('*').order('orden', { ascending: true })
-  ]);
+  // 1. OPTIMIZACIÓN: Pedimos solo los últimos 11 sorteos para ser eficientes.
+  const { data: sorteos, error: sorteosError } = await supabase
+    .from("resultados_sorteos")
+    .select("*")
+    .order("fecha_sorteo", { ascending: false })
+    .order("hora_sorteo", { ascending: false })
+    .limit(11); // <-- Limitamos la consulta aquí
 
-  // Procesamos los datos
-  const sorteos = sorteosResult.data || [];
-  const config = (configResult.data || []).reduce((acc, item) => {
+  if (sorteosError) {
+    console.error("Error obteniendo sorteos:", sorteosError);
+  }
+
+  // 2. Obtenemos la configuración del sitio (premio mayor)
+  const { data: configData } = await supabase
+    .from("site_configurations")
+    .select("key, value")
+    .eq("website_id", "d779ec0b-f302-45ba-a165-677c95a7d607"); // <-- Recuerda verificar que este ID sea el correcto
+
+  const config = (configData || []).reduce((acc, item) => {
     acc[item.key] = item.value;
     return acc;
   }, {});
-  const premios = premiosResult.data || [];
-  
-  // Lógica para encontrar el último sorteo pasado y el próximo sorteo futuro
-  const ultimoSorteo = sorteos.find(s => s.fecha_sorteo <= today);
-  const proximoSorteo = sorteos.find(s => s.fecha_sorteo > today);
 
-  return {
-    ultimoSorteo,
-    proximoSorteo,
-    config,
-    premios
-  };
+  // 3. Lógica para separar sorteos pasados y futuros (esta no cambia)
+  const sorteosPasados = (sorteos || []).filter(
+    (s) => new Date(`${s.fecha_sorteo}T${s.hora_sorteo || "00:00:00"}`) <= now
+  );
+  const sorteosFuturos = (sorteos || []).filter(
+    (s) => new Date(`${s.fecha_sorteo}T${s.hora_sorteo || "00:00:00"}`) > now
+  );
+
+  const ultimoSorteo = sorteosPasados.length > 0 ? sorteosPasados[0] : null;
+  const proximoSorteo =
+    sorteosFuturos.length > 0
+      ? sorteosFuturos[sorteosFuturos.length - 1]
+      : null;
+
+  // 4. LÓGICA CORREGIDA: Tomamos los siguientes 10 de la lista de pasados para el historial.
+  const sorteosAnteriores = sorteosPasados.slice(1, 11);
+
+  const { data: premios, error: premiosError } = await supabase
+    .from("premios")
+    .select("*");
+  if (premiosError) {
+    console.error("Error obteniendo los premios:", premiosError);
+  }
+
+  return { ultimoSorteo, proximoSorteo, config, sorteosAnteriores, premios };
 }
 
 export default async function HomePage() {
-  const { ultimoSorteo, proximoSorteo, config } = await getPageData();
+  const { ultimoSorteo, proximoSorteo, config, sorteosAnteriores, premios } =
+    await getPageData();
 
   return (
-    <div className="bg-slate-900">
+    // He vuelto a poner el fondo oscuro como acordamos
+    <div className="min-h-screen bg-gray-900 text-gray-100">
       <Navbar proximoSorteo={proximoSorteo} />
-      <HeroSection ultimoSorteo={ultimoSorteo} premioMayor={config.premio_mayor_actual} />
-      
-      {/* Aquí irán las otras secciones que construiremos después */}
-      {/* <ResultadosHistorial /> */}
-      {/* <SeccionPremios /> */}
-      {/* ... etc ... */}
+      <HeroSection
+        ultimoSorteo={ultimoSorteo}
+        premioMayor={config.premio_mayor_actual}
+        whatsapp={config.whatsapp_number}
+      />
+      <CtaSection />
+      <ResultadosHistorial sorteosAnteriores={sorteosAnteriores} />
+      <HowToPlaySection whatsapp={config.whatsapp_number} />
+      <PremiosSection premios={premios} />
+      <Footer siteConfig={config} />
     </div>
   );
 }
