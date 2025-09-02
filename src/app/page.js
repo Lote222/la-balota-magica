@@ -11,7 +11,11 @@ import WhatsappFloatingButton from "@/components/WhatsappFloatingButton";
   
 async function getPageData() {
   const supabase = createClient();
-  const now = new Date();
+  
+  // SOLUCIÓN: Creamos un objeto de fecha y hora local para Colombia.
+  const now = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Bogota" })
+  );
 
   // 1. OPTIMIZACIÓN: Pedimos solo los últimos 11 sorteos para ser eficientes.
   const { data: sorteos, error: sorteosError } = await supabase
@@ -19,7 +23,7 @@ async function getPageData() {
     .select("*")
     .order("fecha_sorteo", { ascending: false })
     .order("hora_sorteo", { ascending: false })
-    .limit(11); // <-- Limitamos la consulta aquí
+    .limit(11);
 
   if (sorteosError) {
     console.error("Error obteniendo sorteos:", sorteosError);
@@ -29,7 +33,7 @@ async function getPageData() {
   const { data: configData } = await supabase
     .from("site_configurations")
     .select("key, value")
-    .eq("website_id", "d779ec0b-f302-45ba-a165-677c95a7d607"); // <-- Recuerda verificar que este ID sea el correcto
+    .eq("website_id", "d779ec0b-f302-45ba-a165-677c95a7d607");
 
   const config = (configData || []).reduce((acc, item) => {
     acc[item.key] = item.value;

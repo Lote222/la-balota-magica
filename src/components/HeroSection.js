@@ -102,15 +102,19 @@ const HeroSection = ({ ultimoSorteo, premioMayor, whatsapp }) => {
     const formattedNumber = new Intl.NumberFormat("es-CO").format(number);
     return `$${formattedNumber} Millones`;
   };
+ 
 
-  const fechaFormateada = ultimoSorteo
-    ? new Date(ultimoSorteo.fecha_sorteo).toLocaleDateString("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "";
+// En el componente HeroSection.js o donde sea que se esté formateando la fecha
+
+const fechaFormateada = ultimoSorteo
+  ? new Date(`${ultimoSorteo.fecha_sorteo}T00:00:00`).toLocaleDateString("es-ES", {
+      timeZone: "America/Bogota", // <-- ¡Aquí está la clave!
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  : "";
 
   return (
     // 👇 --- AJUSTE #1: Padding responsivo para el Navbar --- 👇
