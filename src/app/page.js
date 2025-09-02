@@ -7,7 +7,8 @@ import ResultadosHistorial from "@/components/ResultadosHistorial";
 import HowToPlaySection from "@/components/HowToPlaySection";
 import PremiosSection from "@/components/PremiosSection";
 import Footer from "@/components/Footer";
-
+import WhatsappFloatingButton from "@/components/WhatsappFloatingButton";
+  
 async function getPageData() {
   const supabase = createClient();
   const now = new Date();
@@ -81,6 +82,7 @@ export default async function HomePage() {
       <HowToPlaySection whatsapp={config.whatsapp_number} />
       <PremiosSection premios={premios} />
       <Footer siteConfig={config} />
+       <WhatsappFloatingButton whatsappNumber={config.whatsapp_number} />
     </div>
   );
 }
